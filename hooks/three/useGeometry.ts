@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import * as THREE from 'three'
+import { useEffect } from "react";
+import * as THREE from "three";
 
 /**
  * Creates and manages 3D geometry with material
@@ -7,35 +7,34 @@ import * as THREE from 'three'
  */
 export function useGeometry(
   scene: THREE.Scene | null,
-  texture: THREE.Texture | null
+  texture: THREE.Texture | null,
+  sphereRadius: number = 2
 ) {
-  const meshRef = useRef<THREE.Mesh | null>(null)
-
   useEffect(() => {
-    if (!scene || !texture) return
+    if (!scene || !texture) return;
 
-    // Create sphere geometry
-    const geometry = new THREE.SphereGeometry(2, 64, 64)
-    
+    // Create sphere geometry with configurable radius
+    const geometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
+
     // Create material with texture
     const material = new THREE.MeshStandardMaterial({
       map: texture,
       roughness: 0.7,
       metalness: 0.3,
-    })
+    });
 
     // Create mesh and add to scene
-    const mesh = new THREE.Mesh(geometry, material)
-    scene.add(mesh)
-    meshRef.current = mesh
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
 
     // Cleanup
     return () => {
-      scene.remove(mesh)
-      geometry.dispose()
-      material.dispose()
-    }
-  }, [scene, texture])
+      scene.remove(mesh);
+      geometry.dispose();
+      material.dispose();
+    };
+  }, [scene, texture, sphereRadius]);
 
-  return meshRef.current
+  // This hook manages the geometry but doesn't need to return anything
+  // The mesh is added directly to the scene
 }
