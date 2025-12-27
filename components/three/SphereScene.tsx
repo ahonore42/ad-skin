@@ -1,0 +1,65 @@
+'use client'
+
+import { useRef, useEffect } from 'react'
+import { useThreeScene } from '@/hooks/three/useThreeScene'
+import { useCanvasTexture } from '@/hooks/three/useCanvasTexture'
+import { useControls } from '@/hooks/three/useControls'
+import { useLighting } from '@/hooks/three/useLighting'
+import { useGeometry } from '@/hooks/three/useGeometry'
+
+/**
+ * Main 3D scene component that orchestrates all Three.js hooks
+ * Displays a sphere with a canvas texture mapped as its surface
+ */
+export default function SphereScene() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Set up core Three.js scene
+  const { scene, camera, renderer, startAnimation } = useThreeScene(containerRef)
+
+  // Create canvas texture system
+  const { texture } = useCanvasTexture(2048, 1024)
+
+  // Set up camera controls
+  const controls = useControls(camera, renderer, true, 0.5)
+
+  // Add lighting to scene
+  useLighting(scene)
+
+  // Create geometry with texture
+  useGeometry(scene, texture)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Debug:', {
+      scene: !!scene,
+      camera: !!camera,
+      renderer: !!renderer,
+      texture: !!texture,
+      controls: !!controls
+    })
+  }, [scene, camera, renderer, texture, controls])
+
+  // Start animation loop
+  useEffect(() => {
+    if (!scene || !camera || !renderer) {
+      console.log('Missing dependencies for animation')
+      return
+    }
+
+    console.log('Starting animation loop')
+    startAnimation(() => {
+      // Update controls
+      if (controls) {
+        controls.update()
+      }
+
+      // Update texture if needed
+      if (texture) {
+        texture.needsUpdate = true
+      }
+    })
+  }, [scene, camera, renderer, controls, texture, startAnimation])
+
+  return <div ref={containerRef} className="w-full h-full" />
+}
