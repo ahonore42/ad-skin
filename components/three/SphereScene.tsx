@@ -2,10 +2,10 @@
 
 import { useRef, useEffect } from "react";
 import { useThreeScene } from "@/hooks/three/useThreeScene";
-import { useCanvasTexture } from "@/hooks/three/useCanvasTexture";
+import { useCanvasTexture } from "@/hooks/three/canvas/useCanvasTexture";
 import { useControls } from "@/hooks/three/useControls";
 import { useLighting } from "@/hooks/three/lighting/useLighting";
-import { useGeometry } from "@/hooks/three/useGeometry";
+import { useGeometry } from "@/hooks/three/geometry/useGeometry";
 
 /**
  * Main 3D scene component that orchestrates all Three.js hooks
