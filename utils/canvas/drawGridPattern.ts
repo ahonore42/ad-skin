@@ -1,6 +1,79 @@
 /**
- * Draws animated banner ads in a brick pattern that continuously rotates around a 3D surface
- * Banners are clickable with hover effects
+ * Grid Pattern Drawing Utility
+ * Draws animated advertisement grid pattern on canvas
+ */
+
+import { drawAdBanner } from "./drawAdBanner";
+
+// Banner ad constants
+const BANNER_WIDTH = 300;
+const BANNER_HEIGHT = 50;
+const ANIMATION_SPEED = 30; // pixels per second
+
+/**
+ * Calculate grid dimensions based on surface size
+ */
+function calculateGridDimensions(surfaceWidth: number, surfaceHeight: number) {
+  const spacingX = BANNER_WIDTH;
+  const spacingY = BANNER_HEIGHT;
+  const numCols = Math.ceil(surfaceWidth / spacingX) + 1;
+  const numRows = Math.ceil(surfaceHeight / spacingY) + 1;
+  return { numCols, numRows, spacingX, spacingY };
+}
+
+/**
+ * Calculate animation offsets
+ */
+function calculateAnimationOffsets(time: number, surfaceWidth: number) {
+  const totalOffset = time * ANIMATION_SPEED;
+  const offset = totalOffset % surfaceWidth;
+  const rotationCount = Math.floor(totalOffset / surfaceWidth);
+
+  // Calculate controlled vertical shift that properly cycles
+  // Each complete rotation shifts by one banner height, but we need to ensure proper wrapping
+  const verticalShift = rotationCount * BANNER_HEIGHT;
+
+  return { offset, verticalShift };
+}
+
+/**
+ * Calculate banner position with brick-like offset
+ */
+function calculateBannerPosition(
+  row: number,
+  col: number,
+  offset: number,
+  verticalShift: number,
+  spacingX: number,
+  spacingY: number,
+  surfaceWidth: number,
+  surfaceHeight: number
+) {
+  const brickOffset = (row % 2) * (spacingX * 0.5);
+  let x = col * spacingX + brickOffset - offset;
+
+  // Apply controlled vertical shift with proper wrapping
+  let y = row * spacingY - verticalShift;
+
+  // Handle horizontal wrapping
+  if (x < -BANNER_WIDTH) x += surfaceWidth + BANNER_WIDTH;
+  if (x > surfaceWidth) x -= surfaceWidth + BANNER_WIDTH;
+
+  // Handle vertical wrapping - this prevents ads from disappearing
+  const totalGridHeight =
+    Math.ceil(surfaceHeight / BANNER_HEIGHT) * BANNER_HEIGHT;
+  while (y < -BANNER_HEIGHT) {
+    y += totalGridHeight;
+  }
+  while (y > surfaceHeight) {
+    y -= totalGridHeight;
+  }
+
+  return { x, y };
+}
+
+/**
+ * Main grid pattern drawing function
  */
 export function drawGridPattern(
   ctx: CanvasRenderingContext2D,
@@ -9,117 +82,69 @@ export function drawGridPattern(
   time: number = 0,
   mouseX: number = -1,
   mouseY: number = -1
-) {
+): void {
   // Clear canvas
-  ctx.fillStyle = "#1a1a1a";
-  ctx.fillRect(0, 0, width, height);
+  ctx.clearRect(0, 0, width, height);
 
-  // Banner dimensions (correct mobile banner size)
-  const bannerWidth = 300;
-  const bannerHeight = 50;
+  // Calculate grid dimensions and animation offsets
+  const { numCols, numRows, spacingX, spacingY } = calculateGridDimensions(
+    width,
+    height
+  );
+  const { offset, verticalShift } = calculateAnimationOffsets(time, width);
 
-  // Grid spacing - no overlap, banners touch edge to edge
-  const spacingX = bannerWidth; // 300px - no gaps
-  const spacingY = bannerHeight; // 50px - no gaps
+  // Draw each banner using precise mathematical positioning
+  let adIdCounter = 1;
 
-  // Animation - continuous horizontal movement that wraps around texture width
-  const speed = 30;
-  const totalOffset = time * speed;
-  const offset = totalOffset % width; // Wrap at texture width for full rotation
-
-  // Calculate how many full rotations have completed
-  const rotationCount = Math.floor(totalOffset / width);
-
-  // Vertical shuffle amount based on rotation count
-  const shuffleOffset = (rotationCount * spacingY * 0.3) % (spacingY * 3); // Shuffle every rotation
-
-  // Calculate grid dimensions
-  const numCols = Math.ceil(width / spacingX) + 1; // Just enough to cover width
-  const numRows = Math.ceil(height / spacingY) + 1;
-  const totalAds = numRows * numCols;
-
-  // Log surface and ad information (only log occasionally to avoid spam)
-  if (Math.floor(time) % 5 === 0 && Math.floor(time * 10) % 10 === 0) {
-    console.log(
-      `Surface: ${width}x${height}px | Banner: ${bannerWidth}x${bannerHeight}px | Spacing: ${spacingX.toFixed(
-        1
-      )}x${spacingY.toFixed(
-        1
-      )}px | Grid: ${numCols}x${numRows} | Total Ads: ${totalAds}`
-    );
-  }
-
-  // Draw grid
-  for (let row = 0; row < numRows; row++) {
-    // Brick pattern: offset every other row
-    const brickOffset = (row % 2) * (spacingX * 0.5);
-
+  for (let row = -2; row < numRows + 2; row++) {
     for (let col = 0; col < numCols; col++) {
-      // Calculate base position with vertical shuffle
-      let x = col * spacingX + brickOffset - offset;
-      const y = row * spacingY + shuffleOffset;
+      const { x, y } = calculateBannerPosition(
+        row,
+        col,
+        offset,
+        verticalShift,
+        spacingX,
+        spacingY,
+        width,
+        height
+      );
 
-      // Use sequential ad ID based on actual grid position
-      const displayAdId = row * numCols + col + 1;
-
-      // Wrap horizontally - if ad goes off right edge, wrap to left
-      if (x < -bannerWidth) {
-        x += width + bannerWidth;
-      }
-      if (x > width) {
-        x -= width + bannerWidth;
-      }
-
-      // Check if mouse is hovering over this banner
-      const isHovered =
-        mouseX >= x &&
-        mouseX <= x + bannerWidth &&
-        mouseY >= y &&
-        mouseY <= y + bannerHeight;
-
-      // Debug logging for hover detection (only for first few ads)
-      if (isHovered && displayAdId <= 3) {
-        console.log(
-          `Hovering ad ${displayAdId}: mouse(${mouseX.toFixed(
-            0
-          )}, ${mouseY.toFixed(0)}) banner(${x.toFixed(0)}, ${y.toFixed(
-            0
-          )}) size(${bannerWidth}x${bannerHeight})`
+      // Only draw if banner is visible within canvas bounds
+      if (
+        x + BANNER_WIDTH > 0 &&
+        x < width &&
+        y + BANNER_HEIGHT > 0 &&
+        y < height
+      ) {
+        drawAdBanner(
+          ctx,
+          x,
+          y,
+          adIdCounter,
+          time,
+          mouseX,
+          mouseY,
+          BANNER_WIDTH,
+          BANNER_HEIGHT
         );
       }
 
-      // Draw banner with hover effect
-      ctx.fillStyle = isHovered ? "#3a3a3a" : "#2a2a2a"; // Lighter on hover
-      ctx.fillRect(x, y, bannerWidth, bannerHeight);
-
-      // Banner border - thicker and different color on hover
-      ctx.strokeStyle = isHovered ? "#666" : "#444";
-      ctx.lineWidth = isHovered ? 2 : 1;
-      ctx.strokeRect(x, y, bannerWidth, bannerHeight);
-
-      // Add hover outline and clickable indicator
-      if (isHovered) {
-        ctx.strokeStyle = "#888";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(x - 1, y - 1, bannerWidth + 2, bannerHeight + 2);
-
-        // Add small click icon indicator (simple arrow)
-        ctx.fillStyle = "#fff";
-        ctx.font = "12px Arial";
-        ctx.textAlign = "right";
-        ctx.textBaseline = "top";
-        ctx.fillText("↗", x + bannerWidth - 5, y + 5);
-      }
-
-      // Banner text with shuffled ID
-      ctx.fillStyle = "#666";
-      ctx.font = "12px Arial";
-      ctx.textAlign = "left";
-      ctx.fillText(`Ad ${displayAdId}`, x + 8, y + 20);
-
-      ctx.fillStyle = "#555";
-      ctx.font = "10px Arial";
-      ctx.fillText(`300x50`, x + 8, y + 35);
+      adIdCounter++;
     }
   }
+
+  // Add subtle texture overlay
+  ctx.globalAlpha = 0.03;
+  ctx.fillStyle = "#000000";
+
+  // Create noise pattern for texture
+  for (let i = 0; i < width; i += 4) {
+    for (let j = 0; j < height; j += 4) {
+      if (Math.random() > 0.5) {
+        ctx.fillRect(i, j, 2, 2);
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1.0;
 }
