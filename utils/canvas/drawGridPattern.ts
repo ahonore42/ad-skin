@@ -1,80 +1,14 @@
 /**
- * Grid Pattern Drawing Utility
- * Draws animated advertisement grid pattern on canvas
+ * Static Grid Pattern Drawing Utility
+ * Draws a static brick pattern with no animation
  */
 
 import { drawAdBanner } from "./drawAdBanner";
 
-// Banner ad constants
 const BANNER_WIDTH = 300;
 const BANNER_HEIGHT = 50;
-const ANIMATION_SPEED = 30; // pixels per second
+const ANIMATION_SPEED = 30;
 
-/**
- * Calculate grid dimensions based on surface size
- */
-function calculateGridDimensions(surfaceWidth: number, surfaceHeight: number) {
-  const spacingX = BANNER_WIDTH;
-  const spacingY = BANNER_HEIGHT;
-  const numCols = Math.ceil(surfaceWidth / spacingX) + 1;
-  const numRows = Math.ceil(surfaceHeight / spacingY) + 1;
-  return { numCols, numRows, spacingX, spacingY };
-}
-
-/**
- * Calculate animation offsets
- */
-function calculateAnimationOffsets(time: number, surfaceWidth: number) {
-  const totalOffset = time * ANIMATION_SPEED;
-  const offset = totalOffset % surfaceWidth;
-  const rotationCount = Math.floor(totalOffset / surfaceWidth);
-
-  // Calculate controlled vertical shift that properly cycles
-  // Each complete rotation shifts by one banner height, but we need to ensure proper wrapping
-  const verticalShift = rotationCount * BANNER_HEIGHT;
-
-  return { offset, verticalShift };
-}
-
-/**
- * Calculate banner position with brick-like offset
- */
-function calculateBannerPosition(
-  row: number,
-  col: number,
-  offset: number,
-  verticalShift: number,
-  spacingX: number,
-  spacingY: number,
-  surfaceWidth: number,
-  surfaceHeight: number
-) {
-  const brickOffset = (row % 2) * (spacingX * 0.5);
-  let x = col * spacingX + brickOffset - offset;
-
-  // Apply controlled vertical shift with proper wrapping
-  let y = row * spacingY - verticalShift;
-
-  // Handle horizontal wrapping
-  if (x < -BANNER_WIDTH) x += surfaceWidth + BANNER_WIDTH;
-  if (x > surfaceWidth) x -= surfaceWidth + BANNER_WIDTH;
-
-  // Handle vertical wrapping - this prevents ads from disappearing
-  const totalGridHeight =
-    Math.ceil(surfaceHeight / BANNER_HEIGHT) * BANNER_HEIGHT;
-  while (y < -BANNER_HEIGHT) {
-    y += totalGridHeight;
-  }
-  while (y > surfaceHeight) {
-    y -= totalGridHeight;
-  }
-
-  return { x, y };
-}
-
-/**
- * Main grid pattern drawing function
- */
 export function drawGridPattern(
   ctx: CanvasRenderingContext2D,
   width: number,
@@ -83,42 +17,58 @@ export function drawGridPattern(
   mouseX: number = -1,
   mouseY: number = -1
 ): void {
-  // Clear canvas
   ctx.clearRect(0, 0, width, height);
 
-  // Calculate grid dimensions and animation offsets
-  const { numCols, numRows, spacingX, spacingY } = calculateGridDimensions(
-    width,
-    height
-  );
-  const { offset, verticalShift } = calculateAnimationOffsets(time, width);
+  const spacingX = BANNER_WIDTH;
+  const spacingY = BANNER_HEIGHT;
+  const numCols = Math.floor(width / spacingX);
+  const numRows = Math.floor(height / spacingY);
 
-  // Draw each banner using precise mathematical positioning
+  // Calculate animation offset
+  const totalOffset = time * ANIMATION_SPEED;
+  const offset = totalOffset % width;
+
   let adIdCounter = 1;
 
-  for (let row = -2; row < numRows + 2; row++) {
+  for (let row = 0; row < numRows; row++) {
     for (let col = 0; col < numCols; col++) {
-      const { x, y } = calculateBannerPosition(
-        row,
-        col,
-        offset,
-        verticalShift,
-        spacingX,
-        spacingY,
-        width,
-        height
+      const brickOffset = (row % 2) * (spacingX * 0.5);
+      const x = col * spacingX + brickOffset - offset;
+      const y = row * spacingY;
+
+      // Draw the primary ad
+      drawAdBanner(
+        ctx,
+        x,
+        y,
+        adIdCounter,
+        time,
+        mouseX,
+        mouseY,
+        BANNER_WIDTH,
+        BANNER_HEIGHT
       );
 
-      // Only draw if banner is visible within canvas bounds
-      if (
-        x + BANNER_WIDTH > 0 &&
-        x < width &&
-        y + BANNER_HEIGHT > 0 &&
-        y < height
-      ) {
+      // If ad extends beyond right edge, draw wrapped portion on left
+      if (x + BANNER_WIDTH > width) {
         drawAdBanner(
           ctx,
-          x,
+          x - width,
+          y,
+          adIdCounter,
+          time,
+          mouseX,
+          mouseY,
+          BANNER_WIDTH,
+          BANNER_HEIGHT
+        );
+      }
+
+      // If ad starts before left edge, draw wrapped portion on right
+      if (x < 0) {
+        drawAdBanner(
+          ctx,
+          x + width,
           y,
           adIdCounter,
           time,
@@ -132,19 +82,4 @@ export function drawGridPattern(
       adIdCounter++;
     }
   }
-
-  // Add subtle texture overlay
-  ctx.globalAlpha = 0.03;
-  ctx.fillStyle = "#000000";
-
-  // Create noise pattern for texture
-  for (let i = 0; i < width; i += 4) {
-    for (let j = 0; j < height; j += 4) {
-      if (Math.random() > 0.5) {
-        ctx.fillRect(i, j, 2, 2);
-      }
-    }
-  }
-
-  ctx.globalAlpha = 1.0;
 }

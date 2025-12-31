@@ -15,8 +15,8 @@ import { useCanvasAnimation } from "./useCanvasAnimation";
  * Returns the final canvas/texture object with cleanup management
  */
 export function useCanvasTexture(
-  width: number = 2048,
-  height: number = 1024,
+  width: number = 3000,
+  height: number = 2300,
   rendererCanvas?: HTMLCanvasElement | null,
   scene?: THREE.Scene | null,
   camera?: THREE.Camera | null

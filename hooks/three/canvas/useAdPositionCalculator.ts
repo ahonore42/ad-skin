@@ -18,7 +18,7 @@ export function calculateGridDimensions(
   const spacingX = BANNER_WIDTH;
   const spacingY = BANNER_HEIGHT;
 
-  const numCols = Math.ceil(surfaceWidth / spacingX) + 1;
+  const numCols = Math.floor(surfaceWidth / spacingX);
   const numRows = Math.ceil(surfaceHeight / spacingY) + 1;
   const totalAds = numCols * numRows;
 
@@ -38,13 +38,12 @@ export function calculateAnimationOffsets(time: number, surfaceWidth: number) {
   const totalOffset = time * ANIMATION_SPEED;
   const offset = totalOffset % surfaceWidth;
   const rotationCount = Math.floor(totalOffset / surfaceWidth);
-  const shuffleOffset =
-    (rotationCount * BANNER_HEIGHT * 0.3) % (BANNER_HEIGHT * 3);
+  const verticalShift = rotationCount * BANNER_HEIGHT;
 
   return {
     offset,
     rotationCount,
-    shuffleOffset,
+    verticalShift,
   };
 }
 
@@ -55,18 +54,31 @@ export function calculateBannerPosition(
   row: number,
   col: number,
   offset: number,
-  shuffleOffset: number,
+  verticalShift: number,
   spacingX: number,
   spacingY: number,
-  surfaceWidth: number
+  surfaceWidth: number,
+  surfaceHeight?: number
 ) {
   const brickOffset = (row % 2) * (spacingX * 0.5);
   let x = col * spacingX + brickOffset - offset;
-  const y = row * spacingY + shuffleOffset;
+  let y = row * spacingY - verticalShift;
 
   // Handle horizontal wrapping
   if (x < -BANNER_WIDTH) x += surfaceWidth + BANNER_WIDTH;
   if (x > surfaceWidth) x -= surfaceWidth + BANNER_WIDTH;
+
+  // Handle vertical wrapping
+  if (surfaceHeight) {
+    const totalGridHeight =
+      Math.ceil(surfaceHeight / BANNER_HEIGHT) * BANNER_HEIGHT;
+    while (y < -BANNER_HEIGHT) {
+      y += totalGridHeight;
+    }
+    while (y > surfaceHeight) {
+      y -= totalGridHeight;
+    }
+  }
 
   return { x, y };
 }
@@ -85,7 +97,7 @@ export function findAdAtPosition(
     surfaceWidth,
     surfaceHeight
   );
-  const { offset, shuffleOffset } = calculateAnimationOffsets(
+  const { offset, verticalShift } = calculateAnimationOffsets(
     time,
     surfaceWidth
   );
@@ -96,10 +108,11 @@ export function findAdAtPosition(
         row,
         col,
         offset,
-        shuffleOffset,
+        verticalShift,
         spacingX,
         spacingY,
-        surfaceWidth
+        surfaceWidth,
+        surfaceHeight
       );
 
       // Check if click is within this banner
@@ -132,12 +145,12 @@ export function useAdPositionCalculator(
     calculateAnimationOffsets(time, surfaceWidth);
 
   const getBannerPosition = (row: number, col: number, time: number) => {
-    const { offset, shuffleOffset } = getAnimationOffsets(time);
+    const { offset, verticalShift } = getAnimationOffsets(time);
     return calculateBannerPosition(
       row,
       col,
       offset,
-      shuffleOffset,
+      verticalShift,
       gridDimensions.spacingX,
       gridDimensions.spacingY,
       surfaceWidth

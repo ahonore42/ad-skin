@@ -20,8 +20,8 @@ export default function SceneContainer() {
 
   // Create canvas texture system for ad mapping
   const { texture } = useCanvasTexture(
-    2048,
-    1024,
+    3000,
+    2300,
     renderer?.domElement,
     scene,
     camera
@@ -43,7 +43,7 @@ export default function SceneContainer() {
     scene,
     texture,
     "/models/scene.gltf", // Head model path
-    1.0 // Head scale factor
+    2 // Head scale factor
   );
 
   // Start animation loop
