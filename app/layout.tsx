@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/preview.jpg", // You could add a preview image later
+        url: "/preview.jpg", // Placeholder for possible preview image
         width: 1200,
         height: 630,
         alt: "Ad Skin - Human head covered in moving advertisements",
@@ -37,7 +37,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="bg-neutral-50 bg-[radial-gradient(circle_at_50%_50%,_rgba(255,255,255,1)_0%,_rgba(220,220,220,1)_100%)] bg-fixed">
+        {children}
+      </body>
     </html>
   );
 }

@@ -1,13 +1,44 @@
 @import "tailwindcss";
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  body {
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    background-color: #000000 !important;
+    position: relative;
+  }
+
+  /* Base Layer: Static Dark Core */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: radial-gradient(circle at 50% 50%, #111111 0%, #000000 100%);
+  }
+
+  /* Moving Layer: Shifting Wave */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(circle at 55% 45%, #22222e 0%, transparent 70%);
+    /* 8-second cycle for a deep, slow hypnotic state */
+    animation: dynamicWave 8s ease-in-out infinite;
+  }
 }
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@keyframes dynamicWave {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1) translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    /* Moves the light source subtly while scaling to create a 'breathing' depth */
+    transform: scale(1.2) translate(-2%, 2%);
+  }
 }
