@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ad Skin
 
-## Getting Started
+A digital art project where advertisements become the "skin" of 3D models.
 
-First, run the development server:
+## Concept
+
+3D model of Michelangelo's David head with 108 advertisement phrases mapped as animated texture. The head rotates in one direction while the advertisements rotate in the opposite direction. Click detection on individual ads.
+
+## Tech Stack
+
+- **Next.js 14** with TypeScript
+- **Three.js** for 3D rendering
+- **Tailwind CSS v4** for styling
+- Canvas texture mapping with UV coordinates
+
+## Quick Start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# Install dependencies
+pnpm install
+
+# Run development server
 pnpm dev
-# or
-bun dev
+
+# Build for production
+pnpm build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the project.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+├── app/                    # Next.js app directory
+├── components/three/       # 3D scene components
+├── hooks/
+│   ├── three/             # Three.js hooks (scene, geometry, lighting)
+│   └── canvas/            # Canvas drawing utilities
+└── public/                # Static assets including 3D models
+```
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- Interactive 3D model with orbit controls
+- Canvas-based texture mapping with 108 advertisement phrases
+- Counter-rotating animation (model vs. ads)
+- Click detection for individual advertisements
+- Responsive design with eye region protection
+- Modular React hooks architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development Notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- All advertisement phrases are embedded intrinsically in language structure
+- Canvas dimensions: 3000×2300px
+- Ad banner size: 300×50px
+- David head model: 24,011 vertices with UV mapping

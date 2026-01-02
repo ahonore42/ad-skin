@@ -13,7 +13,7 @@ import { drawGridPattern } from "../../../utils/canvas/drawing/drawGridPattern";
 export function useCanvasAnimation(
   canvas: HTMLCanvasElement | null,
   texture: THREE.CanvasTexture | null,
-  mouseRef: React.MutableRefObject<{ x: number; y: number }>,
+  mouseRef: React.RefObject<{ x: number; y: number }>,
   width: number,
   height: number
 ) {
