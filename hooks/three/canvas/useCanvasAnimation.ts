@@ -5,7 +5,7 @@
 
 import { useRef, useEffect } from "react";
 import * as THREE from "three";
-import { drawGridPattern } from "../../../utils/canvas/drawGridPattern";
+import { drawGridPattern } from "../../../utils/canvas/drawing/drawGridPattern";
 
 /**
  * Animation loop with requestAnimationFrame

@@ -2,7 +2,7 @@
  * Banner Advertisement Drawing Utility - Updated
  * Draws a single animated advertisement with intelligent color handling
  */
-import { adContent, adColors } from "../adContent";
+import { adContent, adColors } from "../../adContent";
 
 /**
  * Draw a single advertisement banner
