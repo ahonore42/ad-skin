@@ -4,7 +4,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 /**
  * Enhanced head model loader with complete surface mapping analysis
- * Provides detailed UV coordinate mapping and geometry analysis
+ * Positions model at exact scene center (0, 0, 0)
  */
 export function useHeadModel(
   scene: THREE.Scene | null,
@@ -27,11 +27,9 @@ export function useHeadModel(
     const loader = new GLTFLoader();
 
     const analyzeGeometry = (geometry: THREE.BufferGeometry) => {
-      // Get UV coordinates
       const uvAttribute = geometry.attributes.uv;
       const positionAttribute = geometry.attributes.position;
 
-      // Analyze UV bounds
       let minU = Infinity,
         maxU = -Infinity;
       let minV = Infinity,
@@ -40,14 +38,12 @@ export function useHeadModel(
       for (let i = 0; i < uvAttribute.count; i++) {
         const u = uvAttribute.getX(i);
         const v = uvAttribute.getY(i);
-
         minU = Math.min(minU, u);
         maxU = Math.max(maxU, u);
         minV = Math.min(minV, v);
         maxV = Math.max(maxV, v);
       }
 
-      // Calculate surface area (approximate)
       let surfaceArea = 0;
       const indexAttribute = geometry.index;
       if (indexAttribute) {
@@ -74,7 +70,6 @@ export function useHeadModel(
         }
       }
 
-      // Calculate bounding box
       geometry.computeBoundingBox();
 
       return {
@@ -96,7 +91,6 @@ export function useHeadModel(
         const gltf = await loader.loadAsync(modelPath);
         console.log("GLTF loaded successfully. Analyzing geometry...");
 
-        // Find the mesh
         let mesh: THREE.Mesh | undefined;
         gltf.scene.traverse((child) => {
           if (child instanceof THREE.Mesh && !mesh) {
@@ -109,7 +103,6 @@ export function useHeadModel(
           throw new Error("No mesh found in GLTF model");
         }
 
-        // Analyze the original geometry
         const originalGeometry = mesh.geometry;
         const analysis = analyzeGeometry(originalGeometry);
         setModelInfo(analysis);
@@ -132,101 +125,17 @@ export function useHeadModel(
           },
         });
 
-        // Clone and prepare the geometry
         const geometry = originalGeometry.clone();
 
-        // Calculate proper scaling based on model dimensions
+        // Calculate proper scaling
         const size = new THREE.Vector3();
         analysis.boundingBox.getSize(size);
         const maxDimension = Math.max(size.x, size.y, size.z);
-        const targetSize = 3.0; // Target size for camera view
+        const targetSize = 3.0;
         const autoScale = targetSize / maxDimension;
         const finalScale = scale * autoScale;
 
-        // Apply scaling
         geometry.scale(finalScale, finalScale, finalScale);
-
-        // Ensure UV coordinates are properly set up for complete surface mapping
-        const uvAttribute = geometry.attributes.uv;
-        console.log("UV Coordinates Info:", {
-          count: uvAttribute.count,
-          itemSize: uvAttribute.itemSize,
-          array: uvAttribute.array.constructor.name,
-          length: uvAttribute.array.length,
-        });
-
-        // Create material optimized for ad texture mapping
-        const material = new THREE.MeshStandardMaterial({
-          map: texture,
-          roughness: 0.6,
-          metalness: 0.02,
-          color: 0xffe4d6, // Skin tone tint
-          side: THREE.DoubleSide, // Ensure both sides are rendered
-          transparent: false,
-          alphaTest: 0.1,
-        });
-
-        // Create the final mesh
-        headMesh = new THREE.Mesh(geometry, material);
-        headMesh.name = "DavidHead";
-        headMesh.castShadow = true;
-        headMesh.receiveShadow = true;
-
-        // Apply rotation to orient the head properly
-        // The model comes face-down, rotate to face forward
-        headMesh.rotation.x = -Math.PI / 2; // 90 degrees around X-axis
-
-        // Add to scene
-        scene.add(headMesh);
-
-        console.log(
-          "David head model successfully loaded and mapped with complete UV coverage"
-        );
-        console.log("Model ready for ad texture mapping across entire surface");
-      } catch (error) {
-        console.error("Failed to load head model:", error);
-        console.log(
-          "Using enhanced sphere fallback with head-like proportions"
-        );
-
-        // Enhanced fallback with better head proportions
-        const headGeometry = new THREE.SphereGeometry(1.5, 128, 128); // Higher resolution
-
-        // Modify vertices for more head-like shape
-        const positions = headGeometry.attributes.position.array;
-
-        for (let i = 0; i < positions.length; i += 3) {
-          const x = positions[i];
-          const y = positions[i + 1];
-          const z = positions[i + 2];
-
-          // Normalize to get direction
-          const length = Math.sqrt(x * x + y * y + z * z);
-          const nx = x / length;
-          const ny = y / length;
-          const nz = z / length;
-
-          let radius = 1.5;
-
-          // Head shape modifications
-          radius *= 1.0 + 0.15 * ny; // Taller head
-          radius *= 1.0 - 0.12 * Math.abs(nx); // Narrower sides
-
-          // Flatten back and face
-          if (nz < -0.3) radius *= 0.8; // Flatten back of head
-          if (nz > 0.4 && Math.abs(nx) < 0.6) radius *= 0.95; // Slight face flattening
-
-          positions[i] = nx * radius;
-          positions[i + 1] = ny * radius;
-          positions[i + 2] = nz * radius;
-        }
-
-        headGeometry.attributes.position.needsUpdate = true;
-        headGeometry.computeVertexNormals();
-
-        // Analyze fallback geometry
-        const fallbackAnalysis = analyzeGeometry(headGeometry);
-        setModelInfo(fallbackAnalysis);
 
         const material = new THREE.MeshStandardMaterial({
           map: texture,
@@ -234,21 +143,43 @@ export function useHeadModel(
           metalness: 0.02,
           color: 0xffe4d6,
           side: THREE.DoubleSide,
+          transparent: false,
+          alphaTest: 0.1,
         });
 
-        headMesh = new THREE.Mesh(headGeometry, material);
-        headMesh.name = "EnhancedSphereHead";
+        headMesh = new THREE.Mesh(geometry, material);
+        headMesh.name = "DavidHead";
         headMesh.castShadow = true;
         headMesh.receiveShadow = true;
 
+        // Apply rotation to orient the head properly
+        headMesh.rotation.x = -Math.PI / 2;
+
+        // CENTER THE MODEL AT SCENE ORIGIN (X and Z only, preserve Y)
+        // Calculate the bounding box of the scaled geometry
+        geometry.computeBoundingBox();
+        const box = geometry.boundingBox!;
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+
+        // Position mesh so its center is at scene origin on X and Z axes only
+        headMesh.position.set(-center.x, 0, -center.z);
+
+        console.log("Model center:", center);
+        console.log("Mesh position offset (X, Z only):", headMesh.position);
+
         scene.add(headMesh);
-        console.log("Enhanced sphere head with complete UV mapping ready");
+
+        console.log(
+          "David head model successfully loaded and centered at scene origin"
+        );
+      } catch (error) {
+        console.error("Failed to load head model:", error);
       }
     };
 
     loadHeadModel();
 
-    // Cleanup
     return () => {
       if (headMesh) {
         scene.remove(headMesh);
