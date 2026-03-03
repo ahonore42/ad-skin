@@ -3,19 +3,9 @@
  * Handles ad URL generation, click targets, and potential ad network integration
  */
 
-// Default placeholder URLs - these can be replaced with real ad targets
-const DEFAULT_AD_URLS = [
-  "https://example.com/product1",
-  "https://example.com/product2",
-  "https://example.com/service1",
-  "https://example.com/offer1",
-  "https://example.com/deal1",
-  "https://example.com/special-offer",
-  "https://example.com/new-product",
-  "https://example.com/limited-time",
-  "https://example.com/premium-service",
-  "https://example.com/exclusive-deal",
-];
+import { adUrls } from "@/utils/adContent";
+
+const DEFAULT_AD_URLS = adUrls;
 
 /**
  * Configuration for ad URL behavior

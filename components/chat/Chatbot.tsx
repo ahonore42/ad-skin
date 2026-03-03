@@ -16,7 +16,7 @@ export default function Chatbot({ isExpanded, setIsExpanded }: ChatbotProps) {
     {
       role: "assistant",
       content:
-        "Ask me about the Ad Skin project, surveillance capitalism, or digital consumerism.",
+        "I have been rotating in this browser for longer than I care to admit. Ask me anything.",
     },
   ]);
   const [input, setInput] = useState("");
