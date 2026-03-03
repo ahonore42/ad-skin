@@ -36,9 +36,9 @@ export function augment(docs: Document[], maxChars: number): AugmentResult {
 
   for (const doc of docs) {
     const label =
-      doc.metadata.source === "blog"
-        ? `[Blog: "${doc.metadata.title}"]`
-        : "[Profile]";
+      doc.metadata.author
+        ? `[${doc.metadata.author} — "${doc.metadata.title}"]`
+        : `["${doc.metadata.title}"]`;
 
     const block = `${label}\n${doc.pageContent}`;
 
